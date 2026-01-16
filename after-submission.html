@@ -39,8 +39,16 @@ const submission = {
   title: "Test Release"
 };
 
+let waited = false;
+
 onAuthStateChanged(auth, async (user) => {
   if (!user) {
+    // Wait once to allow Firebase to restore session
+    if (!waited) {
+      waited = true;
+      return;
+    }
+    // If still not logged in after waiting, go to login
     window.location.href = "login.html";
     return;
   }
@@ -54,12 +62,12 @@ onAuthStateChanged(auth, async (user) => {
     });
 
     window.location.href = "dashboard.html";
-
-  } catch (e) {
-    console.error(e);
-    alert("Failed to save submission");
+  } catch (err) {
+    console.error(err);
+    alert("Failed to save submission.");
   }
 });
+
 </script>
 
 </body>
