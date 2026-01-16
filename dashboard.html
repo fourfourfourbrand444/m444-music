@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Releases Dashboard</title>
+<link rel="stylesheet" href="dashboard.css">
+<style>
+  
+</style>
+</head>
+<body>
+<header>My Releases</header>
+<main>
+  <input type="text" id="searchBar" placeholder="Search by Title or Status...">
+  <div id="submissionsContainer"></div>
+</main>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+import { getFirestore, collection, query, where, getDocs, doc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+
+// Replace with your Firebase config
+ const firebaseConfig = {
+  apiKey: "AIzaSyBzUD7avh7vJfeSMRl2o9F09_qd-pl0dSg",
+  authDomain: "usersubmissionsportal.firebaseapp.com",
+  projectId: "usersubmissionsportal",
+  storageBucket: "usersubmissionsportal.firebasestorage.app",
+  messagingSenderId: "734783502459",
+  appId: "1:734783502459:web:cfa2cc5de6976003b24ade",
+  measurementId: "G-WCRN117P8P"
+};
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+
+const container = document.getElementById("submissionsContainer");
+const searchInput = document.getElementById("searchBar");
+
+onAuthStateChanged(auth, async (user) => {
+  if (!user) {
+    window.location.href = "login.html";
+    return;
+  }
+
+  let submissions = [];
+
+  try {
+    const q = query(collection(db, "submissions"), where("userId", "==", user.uid));
+    const snapshot = await getDocs(q);
+
+    // Find max release number for sequential titles
+    let maxNumber = 0;
+    snapshot.forEach(docSnap => {
+      const data = docSnap.data();
+      const match = data.title?.match(/Release #(\d+)/);
+      if (match) {
+        const num = parseInt(match[1]);
+        if (num > maxNumber) maxNumber = num;
+      }
+    });
+
+    snapshot.forEach(docSnap => {
+      let data = docSnap.data();
+      data.id = docSnap.id;
+
+      // Auto-assign sequential Release #n if title missing
+      if (!data.title || data.title === "" || data.title.startsWith("{")) {
+        maxNumber++;
+        data.title = `Release #${maxNumber}`;
+        updateDoc(doc(db, "submissions", docSnap.id), { title: data.title }).catch(console.error);
+      }
+
+      // Default artist if missing
+      if (!data.artist || data.artist === "" || data.artist === "-") {
+        data.artist = "-";
+        updateDoc(doc(db, "submissions", docSnap.id), { artist: data.artist }).catch(console.error);
+      }
+
+      // Default status if missing
+      if (!data.status || data.status === "") {
+        data.status = "Pending";
+        updateDoc(doc(db, "submissions", docSnap.id), { status: data.status }).catch(console.error);
+      }
+
+      // Default createdAt if missing
+      if (!data.createdAt) {
+        data.createdAt = serverTimestamp();
+        updateDoc(doc(db, "submissions", docSnap.id), { createdAt: data.createdAt }).catch(console.error);
+      }
+
+      submissions.push(data);
+    });
+
+    displaySubmissions(submissions);
+
+    // Search filter
+    searchInput.addEventListener("input", () => {
+      const term = searchInput.value.toLowerCase();
+      const filtered = submissions.filter(s =>
+        s.title.toLowerCase().includes(term) ||
+        s.status.toLowerCase().includes(term)
+      );
+      displaySubmissions(filtered);
+    });
+
+  } catch (err) {
+    console.error("Error loading submissions:", err);
+    container.innerHTML = "<p style='color:red;'>Failed to load submissions.</p>";
+  }
+});
+
+function displaySubmissions(subs) {
+  container.innerHTML = "";
+  subs.forEach(sub => {
+    const card = document.createElement("div");
+    card.className = "card";
+
+    const time = sub.createdAt?.seconds
+      ? new Date(sub.createdAt.seconds * 1000).toLocaleString()
+      : sub.createdAt
+        ? new Date(sub.createdAt).toLocaleString()
+        : new Date().toLocaleString();
+
+    let statusClass = "pending";
+    if(sub.status.toLowerCase() === "approved") statusClass = "approved";
+    if(sub.status.toLowerCase() === "rejected") statusClass = "rejected";
+
+    card.innerHTML = `
+      <div class="title">${sub.title}</div>
+      <div class="status ${statusClass}">${sub.status}</div>
+      <div class="submittedAt">${time}</div>
+    `;
+
+    container.appendChild(card);
+  });
+}
+</script>
+</body>
+</html>

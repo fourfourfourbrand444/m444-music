@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Release Details</title>
+<link rel="stylesheet" href="release d.css">
+<style>
+ 
+</style>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+  import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+  import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+
+  const firebaseConfig = {
+  apiKey: "AIzaSyBzUD7avh7vJfeSMRl2o9F09_qd-pl0dSg",
+  authDomain: "usersubmissionsportal.firebaseapp.com",
+  projectId: "usersubmissionsportal",
+  storageBucket: "usersubmissionsportal.firebasestorage.app",
+  messagingSenderId: "734783502459",
+  appId: "1:734783502459:web:cfa2cc5de6976003b24ade",
+  measurementId: "G-WCRN117P8P"
+};
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const auth = getAuth(app);
+
+  function getQueryParam(name) {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get(name);
+  }
+
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) {
+      window.location.href = "login.html";
+      return;
+    }
+
+    const releaseId = getQueryParam("id");
+    if (!releaseId) {
+      alert("No release ID provided.");
+      window.location.href = "dashboard.html";
+      return;
+    }
+
+    try {
+      const docRef = doc(db, "submissions", releaseId);
+      const docSnap = await getDoc(docRef);
+
+      if (!docSnap.exists()) {
+        alert("Release not found.");
+        window.location.href = "dashboard.html";
+        return;
+      }
+
+      const data = docSnap.data();
+
+      document.getElementById("title").textContent = data.title || "Untitled Release";
+      document.getElementById("artist").textContent = data.artist || "-";
+      document.getElementById("status").textContent = data.status || "Pending";
+      document.getElementById("submittedAt").textContent = data.createdAt
+        ? new Date(data.createdAt).toLocaleString()
+        : "-";
+
+    } catch (err) {
+      console.error("Failed to load release:", err);
+      alert("Failed to load release.");
+      window.location.href = "dashboard.html";
+    }
+  });
+</script>
+</head>
+<body>
+<div class="container">
+  <h1>Release Details</h1>
+  <div class="field">
+    <label>Title</label>
+    <span id="title">Loading...</span>
+  </div>
+  <div class="field">
+    <label>Artist</label>
+    <span id="artist">Loading...</span>
+  </div>
+  <div class="field">
+    <label>Status</label>
+    <span id="status">Loading...</span>
+  </div>
+ 
+  <a href="dashboard.html" class="back-btn">← Back to Dashboard</a>
+</div>
+</body>
+</html>

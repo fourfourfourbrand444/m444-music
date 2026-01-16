@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Saving Submission...</title>
+<link rel="stylesheet" href="aftter-submittion.css">
+<style>
+
+</style>
+</head>
+<body>
+<div class="box">
+  <h2>Saving your submission…</h2>
+  <p>Please wait</p>
+  <div class="loader"></div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+
+// 🔑 Replace with your Firebase config
+ const firebaseConfig = {
+  apiKey: "AIzaSyBzUD7avh7vJfeSMRl2o9F09_qd-pl0dSg",
+  authDomain: "usersubmissionsportal.firebaseapp.com",
+  projectId: "usersubmissionsportal",
+  storageBucket: "usersubmissionsportal.firebasestorage.app",
+  messagingSenderId: "734783502459",
+  appId: "1:734783502459:web:cfa2cc5de6976003b24ade",
+  measurementId: "G-WCRN117P8P"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// Read URL parameters from Tally
+const params = new URLSearchParams(window.location.search);
+
+const submission = {
+  title: params.get("Release Title") || params.get("title") || "Untitled Release",
+  artist: params.get("Artist Name") || "",
+  status: "Pending",
+  createdAt: Date.now()
+};
+
+
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+import { addDoc, collection } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+
+onAuthStateChanged(auth, async (user) => {
+  if (!user) {
+    window.location.href = "login.html";
+    return;
+  }
+
+  try {
+    await addDoc(collection(db, "submissions"), {
+      ...submission,          // your existing form data
+      userId: user.uid,       // link to this user
+      status: "Pending",
+      createdAt: Date.now()
+    });
+
+    window.location.href = "dashboard.html";
+
+  } catch (err) {
+    console.error(err);
+    alert("Failed to save submission.");
+  }
+});
+
+
+// Save to Firebase and redirect
+async function saveSubmission(data){
+  try{
+    await addDoc(collection(db, "submissions"), data);
+    window.location.href = "dashboard.html"; // redirect after save
+  } catch(e){
+    alert("Failed to save submission.");
+    console.error(e);
+  }
+}
+
+saveSubmission(submission);
+</script>
+</body>
+</html>
