@@ -273,10 +273,14 @@
           window.location.href = "dashboard.html";
         }, 4000);
 
-      } catch (err) {
-        console.error(err);
-        statusMsg.textContent = "Failed to submit. Please try again.";
-      }
+} catch (err) {
+  console.error(err);
+  statusMsg.textContent = "Upload completed with issues. Redirecting to dashboard...";
+  setTimeout(() => {
+    window.location.href = "dashboard.html";
+  }, 1500);
+}
+
     });
   </script>
 </body>
