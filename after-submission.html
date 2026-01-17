@@ -54,14 +54,14 @@ onAuthStateChanged(auth, async (user) => {
   }
 
   try {
-    await addDoc(collection(db, "submissions"), {
+    await addDoc(collection(db, "sharp"), {
       ...submission,
       userId: user.uid,
       status: "Pending",
       createdAt: Date.now()
     });
 
-    window.location.href = "dashboard.html";
+    window.location.href = "form.html";
   } catch (err) {
     console.error(err);
     alert("Failed to save submission.");

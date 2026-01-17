@@ -1,0 +1,19 @@
+* { box-sizing:border-box; margin:0; padding:0; font-family:'Roboto', sans-serif; }
+body { background:#121212; color:#fff; }
+header { background:#111111; text-align:center; padding:2rem; font-size:1.8rem; font-weight:700; letter-spacing:1px; }
+main { max-width:1000px; margin:2rem auto; padding:1rem; }
+#searchBar { padding:12px; width:100%; max-width:400px; margin:0 auto 20px auto; display:block; border-radius:6px; border:none; background:#2c2c2c; color:#fff; }
+.card { background:#1e1e1e; border-radius:10px; box-shadow:0 6px 18px rgba(0,0,0,0.6); padding:20px; margin-bottom:20px; display:flex; flex-wrap:wrap; gap:15px; align-items:flex-start; transition:0.3s; }
+.card:hover { transform: translateY(-5px); box-shadow:0 8px 24px rgba(0,0,0,0.7); }
+.card img.cover { width:150px; height:150px; border-radius:8px; object-fit:cover; }
+.info { flex:1; min-width:200px; display:flex; flex-direction:column; gap:5px; }
+.info div { font-size:0.95rem; }
+.status { font-weight:700; padding:4px 10px; border-radius:6px; display:inline-block; color:#fff; font-size:0.9rem; margin-top:5px; width:fit-content; }
+.status.Pending { background:#ff9800; }
+.status.Approved { background:#4caf50; }
+.status.Rejected { background:#f44336; }
+.tracks { margin-top:10px; background:#2c2c2c; padding:10px; border-radius:6px; }
+.tracks div { margin-bottom:5px; }
+.downloadLink { color:#1DB954; text-decoration:none; font-weight:500; margin-right:10px; }
+.downloadLink:hover { text-decoration:underline; }
+@media(max-width:600px) { .card { flex-direction:column; align-items:flex-start; } .card img.cover { width:100%; height:auto; } }

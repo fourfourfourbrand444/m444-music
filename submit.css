@@ -1,0 +1,210 @@
+ * { box-sizing: border-box; margin: 0; padding: 0; font-family: "Inter", system-ui, sans-serif; }
+    body {
+      min-height: 100vh;
+      background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .wrapper {
+      width: 100%;
+      max-width: 900px;
+      background: rgba(15, 15, 25, 0.95);
+      border-radius: 16px;
+      padding: 30px 25px 40px;
+      box-shadow: 0 30px 80px rgba(0,0,0,0.6);
+      animation: fadeIn 0.8s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 10px;
+      font-size: 2rem;
+      background: linear-gradient(90deg, #1DB954, #00e0ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #aaa;
+      margin-bottom: 30px;
+      font-size: 0.95rem;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .field label {
+      font-size: 0.85rem;
+      margin-bottom: 6px;
+      color: #bbb;
+    }
+
+    .field input,
+    .field select,
+    .field textarea {
+      background: #0f1220;
+      border: 1px solid #2a2f55;
+      color: #fff;
+      padding: 12px 14px;
+      border-radius: 10px;
+      outline: none;
+      transition: 0.2s;
+    }
+
+    .field input:focus,
+    .field select:focus,
+    .field textarea:focus {
+      border-color: #1DB954;
+      box-shadow: 0 0 0 2px rgba(29,185,84,0.2);
+    }
+
+    textarea { resize: vertical; min-height: 80px; }
+
+    .section-title {
+      margin: 25px 0 12px;
+      font-size: 1.1rem;
+      color: #1DB954;
+    }
+
+    .upload-box {
+      border: 2px dashed #2a2f55;
+      border-radius: 12px;
+      padding: 18px;
+      text-align: center;
+      color: #aaa;
+    }
+
+    .upload-box input {
+      margin-top: 8px;
+      color: #fff;
+    }
+
+    #tracksContainer .track {
+      background: #0f1220;
+      border: 1px solid #2a2f55;
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 12px;
+    }
+
+    .track-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .btn {
+      padding: 12px 18px;
+      border-radius: 12px;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+      transition: 0.2s;
+    }
+
+    .btn-primary {
+      background: linear-gradient(90deg, #1DB954, #00e0ff);
+      color: #000;
+    }
+
+    .btn-primary:hover { opacity: 0.9; }
+
+    .btn-outline {
+      background: transparent;
+      border: 1px solid #2a2f55;
+      color: #fff;
+    }
+
+    .btn-outline:hover { border-color: #1DB954; }
+
+    #statusMsg {
+      text-align: center;
+      margin-top: 20px;
+      color: #1DB954;
+    }
+
+    #progressContainer {
+      width: 100%;
+      max-width: 400px;
+      margin: 10px auto;
+      background: #1a1d33;
+      border-radius: 6px;
+      overflow: hidden;
+      display: none;
+    }
+
+    #progressBar {
+      height: 16px;
+      width: 0%;
+      background: linear-gradient(90deg, #1DB954, #00e0ff);
+    }
+
+    #popupOverlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.75);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 999;
+    }
+
+    .popupBox {
+      background: #0f1220;
+      max-width: 420px;
+      width: 90%;
+      padding: 28px;
+      border-radius: 16px;
+      text-align: center;
+      animation: fadeIn 0.4s ease;
+    }
+
+    .popupBox h2 {
+      color: #1DB954;
+      margin-bottom: 10px;
+    }
+
+    .popupBox p {
+      color: #ccc;
+      font-size: 0.9rem;
+      margin-bottom: 18px;
+    }
+
+    @media (max-width: 600px) {
+      h1 { font-size: 1.6rem; }
+    }
+    @media (max-width: 520px) {
+  .track-grid {
+    grid-template-columns: 1fr; /* stack fields */
+  }
+
+  .track .field input {
+    width: 100%;
+  }
+}

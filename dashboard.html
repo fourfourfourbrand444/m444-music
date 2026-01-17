@@ -3,26 +3,24 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>My Releases Dashboard</title>
-<link rel="stylesheet" href="dashboard.css">
-<style>
-  
-</style>
+<title>My Releases | 444Music Distribution</title>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="form.css">
+
 </head>
 <body>
-<header>My Releases</header>
+<header>My Releases | 444Music Distribution</header>
 <main>
-  <input type="text" id="searchBar" placeholder="Search by Title or Status...">
-  <div id="submissionsContainer"></div>
+<input type="text" id="searchBar" placeholder="Search by Title, Artist, Genre, or Status...">
+<div id="submissionsContainer"></div>
 </main>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-import { getFirestore, collection, query, where, getDocs, doc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 
-// Replace with your Firebase config
- const firebaseConfig = {
+const firebaseConfig = {
   apiKey: "AIzaSyBzUD7avh7vJfeSMRl2o9F09_qd-pl0dSg",
   authDomain: "usersubmissionsportal.firebaseapp.com",
   projectId: "usersubmissionsportal",
@@ -31,6 +29,7 @@ import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/
   appId: "1:734783502459:web:cfa2cc5de6976003b24ade",
   measurementId: "G-WCRN117P8P"
 };
+
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
@@ -38,101 +37,62 @@ const auth = getAuth(app);
 const container = document.getElementById("submissionsContainer");
 const searchInput = document.getElementById("searchBar");
 
-onAuthStateChanged(auth, async (user) => {
-  if (!user) {
-    window.location.href = "login.html";
-    return;
-  }
+onAuthStateChanged(auth, async (user)=>{
+  if(!user){ window.location.href="login.html"; return; }
 
-  let submissions = [];
-
-  try {
-    const q = query(collection(db, "submissions"), where("userId", "==", user.uid));
+  try{
+    const q = query(collection(db,"submissions"), where("userId","==",user.uid));
     const snapshot = await getDocs(q);
-
-    // Find max release number for sequential titles
-    let maxNumber = 0;
-    snapshot.forEach(docSnap => {
-      const data = docSnap.data();
-      const match = data.title?.match(/Release #(\d+)/);
-      if (match) {
-        const num = parseInt(match[1]);
-        if (num > maxNumber) maxNumber = num;
-      }
-    });
-
-    snapshot.forEach(docSnap => {
-      let data = docSnap.data();
-      data.id = docSnap.id;
-
-      // Auto-assign sequential Release #n if title missing
-      if (!data.title || data.title === "" || data.title.startsWith("{")) {
-        maxNumber++;
-        data.title = `Release #${maxNumber}`;
-        updateDoc(doc(db, "submissions", docSnap.id), { title: data.title }).catch(console.error);
-      }
-
-      // Default artist if missing
-      if (!data.artist || data.artist === "" || data.artist === "-") {
-        data.artist = "-";
-        updateDoc(doc(db, "submissions", docSnap.id), { artist: data.artist }).catch(console.error);
-      }
-
-      // Default status if missing
-      if (!data.status || data.status === "") {
-        data.status = "Pending";
-        updateDoc(doc(db, "submissions", docSnap.id), { status: data.status }).catch(console.error);
-      }
-
-      // Default createdAt if missing
-      if (!data.createdAt) {
-        data.createdAt = serverTimestamp();
-        updateDoc(doc(db, "submissions", docSnap.id), { createdAt: data.createdAt }).catch(console.error);
-      }
-
-      submissions.push(data);
-    });
-
+    let submissions = [];
+    snapshot.forEach(docSnap => { submissions.push({id:docSnap.id, ...docSnap.data()}); });
     displaySubmissions(submissions);
 
-    // Search filter
-    searchInput.addEventListener("input", () => {
+    searchInput.addEventListener("input", ()=>{
       const term = searchInput.value.toLowerCase();
       const filtered = submissions.filter(s =>
         s.title.toLowerCase().includes(term) ||
-        s.status.toLowerCase().includes(term)
+        s.artist.toLowerCase().includes(term) ||
+        (s.genre && s.genre.toLowerCase().includes(term)) ||
+        (s.status && s.status.toLowerCase().includes(term))
       );
       displaySubmissions(filtered);
     });
 
-  } catch (err) {
-    console.error("Error loading submissions:", err);
-    container.innerHTML = "<p style='color:red;'>Failed to load submissions.</p>";
-  }
+  } catch(err){ console.error(err); container.innerHTML="<p>Failed to load releases.</p>"; }
 });
 
-function displaySubmissions(subs) {
+function displaySubmissions(subs){
   container.innerHTML = "";
-  subs.forEach(sub => {
+  subs.forEach(sub=>{
     const card = document.createElement("div");
-    card.className = "card";
+    card.className="card";
 
-    const time = sub.createdAt?.seconds
-      ? new Date(sub.createdAt.seconds * 1000).toLocaleString()
-      : sub.createdAt
-        ? new Date(sub.createdAt).toLocaleString()
-        : new Date().toLocaleString();
+    const statusClass = sub.status || "Pending";
 
-    let statusClass = "pending";
-    if(sub.status.toLowerCase() === "approved") statusClass = "approved";
-    if(sub.status.toLowerCase() === "rejected") statusClass = "rejected";
+    let tracksHTML = "";
+    if(sub.tracks && sub.tracks.length){
+      tracksHTML = `<div class="tracks"><strong>Tracklist:</strong>`;
+      sub.tracks.forEach((t,i)=>{
+        tracksHTML += `<div>${i+1}. ${t.title} - ${t.artist} | <a href="${t.fileURL}" target="_blank" class="downloadLink">Download</a></div>`;
+      });
+      tracksHTML += `</div>`;
+    }
 
     card.innerHTML = `
-      <div class="title">${sub.title}</div>
-      <div class="status ${statusClass}">${sub.status}</div>
-      <div class="submittedAt">${time}</div>
+      <img class="cover" src="${sub.coverURL}" alt="Cover Art">
+      <div class="info">
+        <div><strong>Title:</strong> ${sub.title}</div>
+        <div><strong>Artist:</strong> ${sub.artist}</div>
+        <div><strong>Type:</strong> ${sub.releaseType}</div>
+        <div><strong>Release Date:</strong> ${sub.releaseDate}</div>
+        <div><strong>Featuring:</strong> ${sub.featuring || "-"}</div>
+        <div><strong>Genre:</strong> ${sub.genre}</div>
+        <div><strong>Language:</strong> ${sub.language}</div>
+        <div><strong>Explicit:</strong> ${sub.explicit ? "Yes":"No"}</div>
+        <div class="status ${statusClass}">${statusClass}</div>
+        ${tracksHTML}
+      </div>
     `;
-
     container.appendChild(card);
   });
 }

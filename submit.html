@@ -1,53 +1,282 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Processing Submission...</title>
-  <link rel="stylesheet" href="aftter-submittion.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Submit Release – 444Music Distribution</title>
+  <link rel="stylesheet" href="submit.css">
+  <style>
+   
+  </style>
 </head>
+
 <body>
-  <h2>Creating New Release…</h2>
+  <div class="wrapper">
+    <h1>Submit Your Release</h1>
+    <div class="subtitle">Distribute your music worldwide with .444Music Distribution</div>
 
+    <form id="releaseForm">
+      <div class="grid">
+        <div class="field">
+          <label>Artist Name *</label>
+          <input id="artistName" required />
+        </div>
+
+        <div class="field">
+          <label>Release Title *</label>
+          <input id="releaseTitle" required />
+        </div>
+
+        <div class="field">
+          <label>Main Artist *</label>
+          <input id="mainArtist" required />
+        </div>
+
+        <div class="field">
+          <label>Featuring Artist(s)</label>
+          <input id="featuring" placeholder="Optional" />
+        </div>
+
+        <div class="field">
+          <label>Release Type *</label>
+          <select id="releaseType" required>
+            <option value="">Select</option>
+            <option value="Single">Single</option>
+            <option value="EP">EP</option>
+            <option value="Album">Album</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label>Genre *</label>
+          <input id="genre" required />
+        </div>
+
+        <div class="field">
+          <label>Language *</label>
+          <input id="language" required />
+        </div>
+
+        <div class="field">
+          <label>Release Date *</label>
+          <input type="date" id="releaseDate" required />
+        </div>
+
+        <div class="field">
+          <label>Copyright Holder *</label>
+          <input id="copyright" required />
+        </div>
+
+        <div class="field">
+          <label>Label Name</label>
+          <input id="label" placeholder="Optional" />
+        </div>
+
+        <div class="field">
+          <label>Explicit Content?</label>
+          <select id="explicit">
+            <option value="No">No</option>
+            <option value="Yes">Yes</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Description / Notes</label>
+        <textarea id="description" placeholder="Any special notes for our team..."></textarea>
+      </div>
+
+      <div class="section-title">Cover Art</div>
+      <div class="upload-box">
+        Upload square cover image (JPG/PNG)
+        <input type="file" id="coverFile" accept="image/*" required />
+      </div>
+
+      <div class="section-title">Tracks</div>
+      <div id="tracksContainer"></div>
+
+      <div class="actions">
+        <button type="button" id="addTrackBtn" class="btn btn-outline">Add Track</button>
+        <button type="submit" class="btn btn-primary">Submit Release</button>
+      </div>
+
+      <div id="statusMsg"></div>
+      <div id="progressContainer">
+        <div id="progressBar"></div>
+      </div>
+    </form>
+  </div>
+
+  <!-- Popup -->
+  <div id="popupOverlay">
+    <div class="popupBox">
+      <h2>Release Submitted</h2>
+      <p>Your release has been received and is now under review. Status: <strong>Pending</strong>.</p>
+      <button id="popupProceed" class="btn btn-primary">Go to Dashboard</button>
+    </div>
+  </div>
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.21.0/firebase-app.js";
-    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.21.0/firebase-auth.js";
-    import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.21.0/firebase-firestore.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+    import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+    import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-storage.js";
 
-   const firebaseConfig = {
-  apiKey: "AIzaSyBzUD7avh7vJfeSMRl2o9F09_qd-pl0dSg",
-  authDomain: "usersubmissionsportal.firebaseapp.com",
-  projectId: "usersubmissionsportal",
-  storageBucket: "usersubmissionsportal.firebasestorage.app",
-  messagingSenderId: "734783502459",
-  appId: "1:734783502459:web:cfa2cc5de6976003b24ade",
-  measurementId: "G-WCRN117P8P"
-};
+    const firebaseConfig = {
+      apiKey: "AIzaSyBzUD7avh7vJfeSMRl2o9F09_qd-pl0dSg",
+      authDomain: "usersubmissionsportal.firebaseapp.com",
+      projectId: "usersubmissionsportal",
+      storageBucket: "usersubmissionsportal.firebasestorage.app",
+      messagingSenderId: "734783502459",
+      appId: "1:734783502459:web:cfa2cc5de6976003b24ade"
+    };
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
+    const storage = getStorage(app);
 
-    onAuthStateChanged(auth, async (user) => {
+    const form = document.getElementById("releaseForm");
+    const tracksContainer = document.getElementById("tracksContainer");
+    const addTrackBtn = document.getElementById("addTrackBtn");
+    const statusMsg = document.getElementById("statusMsg");
+    const progressContainer = document.getElementById("progressContainer");
+    const progressBar = document.getElementById("progressBar");
+    const popupOverlay = document.getElementById("popupOverlay");
+    const popupProceed = document.getElementById("popupProceed");
+    const releaseTypeSelect = document.getElementById("releaseType");
+
+    let currentUser = null;
+
+    onAuthStateChanged(auth, (user) => {
       if (!user) {
-        alert("Please login first.");
-        window.location = "login.html";
-        return;
+        window.location.href = "login.html";
+      } else {
+        currentUser = user;
+        resetTracksForType();
       }
+    });
 
-      const params = new URLSearchParams(window.location.search);
-      let data = {};
+    function createTrack() {
+      const div = document.createElement("div");
+      div.className = "track";
+      div.innerHTML = `
+        <div class="track-grid">
+          <div class="field">
+            <label>Track Title *</label>
+            <input class="trackTitle" required />
+          </div>
+          <div class="field">
+            <label>Track Artist *</label>
+            <input class="trackArtist" required />
+          </div>
+        </div>
+        <div class="field">
+          <label>Audio File *</label>
+          <input type="file" class="trackFile" accept="audio/*" required />
+        </div>
+      `;
+      return div;
+    }
 
-      for (const [key, value] of params.entries()) {
-        data[key] = value;
+    function resetTracksForType() {
+      tracksContainer.innerHTML = "";
+      const type = releaseTypeSelect.value || "Single";
+      const count = type === "Single" ? 1 : 2;
+      for (let i = 0; i < count; i++) {
+        tracksContainer.appendChild(createTrack());
       }
+    }
 
-      data.userId = user.uid;
-      data.email = user.email;
-      data.status = "Pending";
-      data.createdAt = serverTimestamp();
+    releaseTypeSelect.addEventListener("change", resetTracksForType);
+    addTrackBtn.addEventListener("click", () => {
+      tracksContainer.appendChild(createTrack());
+    });
 
-      await addDoc(collection(db, "submissions"), data);
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      if (!currentUser) return;
 
-      window.location = "submissions.html";
+      statusMsg.textContent = "Uploading your release... Please wait.";
+      progressContainer.style.display = "block";
+      progressBar.style.width = "0%";
+
+      try {
+        const data = {
+          artistName: document.getElementById("artistName").value.trim(),
+          title: document.getElementById("releaseTitle").value.trim(),
+          mainArtist: document.getElementById("mainArtist").value.trim(),
+          featuring: document.getElementById("featuring").value.trim(),
+          releaseType: document.getElementById("releaseType").value,
+          genre: document.getElementById("genre").value.trim(),
+          language: document.getElementById("language").value.trim(),
+          releaseDate: document.getElementById("releaseDate").value,
+          copyright: document.getElementById("copyright").value.trim(),
+          label: document.getElementById("label").value.trim(),
+          explicit: document.getElementById("explicit").value,
+          description: document.getElementById("description").value.trim(),
+          userId: currentUser.uid,
+          status: "Pending",
+          createdAt: Date.now()
+        };
+
+        const coverFile = document.getElementById("coverFile").files[0];
+        if (!coverFile) throw new Error("Cover missing");
+
+        const coverRef = ref(storage, `covers/${currentUser.uid}/${Date.now()}_${coverFile.name}`);
+        const coverTask = uploadBytesResumable(coverRef, coverFile);
+
+        const coverURL = await new Promise((resolve, reject) => {
+          coverTask.on("state_changed", snap => {
+            progressBar.style.width = (snap.bytesTransferred / snap.totalBytes) * 40 + "%";
+          }, reject, async () => resolve(await getDownloadURL(coverRef)));
+        });
+
+        const tracks = [];
+        const trackDivs = tracksContainer.querySelectorAll(".track");
+        let done = 0;
+
+        for (const div of trackDivs) {
+          const tTitle = div.querySelector(".trackTitle").value.trim();
+          const tArtist = div.querySelector(".trackArtist").value.trim();
+          const tFile = div.querySelector(".trackFile").files[0];
+          if (!tTitle || !tArtist || !tFile) throw new Error("Track info missing");
+
+          const tRef = ref(storage, `tracks/${currentUser.uid}/${Date.now()}_${tFile.name}`);
+          const tTask = uploadBytesResumable(tRef, tFile);
+
+          const url = await new Promise((resolve, reject) => {
+            tTask.on("state_changed", snap => {
+              const base = 40 + (done / trackDivs.length) * 60;
+              progressBar.style.width = base + (snap.bytesTransferred / snap.totalBytes) * (60 / trackDivs.length) + "%";
+            }, reject, async () => resolve(await getDownloadURL(tRef)));
+          });
+
+          tracks.push({ title: tTitle, artist: tArtist, fileURL: url });
+          done++;
+        }
+
+        await addDoc(collection(db, "submissions"), {
+          ...data,
+          coverURL,
+          tracks
+        });
+
+        statusMsg.style.display = "none";
+        progressContainer.style.display = "none";
+        popupOverlay.style.display = "flex";
+
+        popupProceed.onclick = () => {
+          window.location.href = "dashboard.html";
+        };
+
+        setTimeout(() => {
+          window.location.href = "dashboard.html";
+        }, 4000);
+
+      } catch (err) {
+        console.error(err);
+        statusMsg.textContent = "Failed to submit. Please try again.";
+      }
     });
   </script>
 </body>
